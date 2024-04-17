@@ -1,9 +1,12 @@
 
+using System.ComponentModel.DataAnnotations;
+
 namespace Domain
 {
     public class Activity //class name relate to table in a database and each porperties relates to column inside the table
     {
         public Guid Id { get; set; } //getters setters available to get the value and set the value
+       // [Required]  ---> Data Annotations
         public string Title { get; set; }
         public DateTime Date { get; set; }
         public string Description { get; set; }
