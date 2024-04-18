@@ -2,6 +2,7 @@ import {  makeAutoObservable, runInAction } from "mobx"
 import { Activity } from "../models/activity"
 import agent from "../api/agent";
 import { v4 as uuid } from "uuid";
+import { format } from "date-fns";
 
 export default class ActivityStore {
     activityRegistry = new Map<string, Activity>()
@@ -16,21 +17,19 @@ export default class ActivityStore {
 
     get activitiesByDate() {
         return Array.from(this.activityRegistry.values()).sort((a, b) =>
-            Date.parse(a.date) - Date.parse(b.date))
+            a.date!.getTime() - b.date!.getTime());
     }
 
-    get groupedActivities(): [string, Activity[]][] {
-        const sortedActivities = Array.from(this.activityRegistry.values()).sort((a, b) =>
-            Date.parse(a.date) - Date.parse(b.date));
-
+    get groupedActivities() {
         return Object.entries(
-            sortedActivities.reduce((activities, activity) => {
-                const date = activity.date.split('T')[0];
-                activities[date] = activities[date] ? [...activities[date], activity] : [activity];
-                return activities;
-            }, {} as {[key: string]: Activity[]})
-        )
-    }
+        this.activitiesByDate.reduce((activities, activity) => {
+            const date = format(activity.date!, "dd MMM yyyy")
+            activities[date] = activities[date] ? [...activities[date], activity] : [activity];
+            return activities;
+        }, {} as {[key: string]: Activity[]})
+    )
+}
+
 
     loadActivities = async() => {
         //this.loadingInitial = true;
@@ -85,7 +84,7 @@ export default class ActivityStore {
     }
 
     private setActivity = (activity: Activity) => {
-        activity.date = activity.date.split("T")[0]
+        activity.date = new Date(activity.date!);
         //this.activities.push(activity)  //we can mutate the state in mobx
         this.activityRegistry.set(activity.id, activity) // set as a key value pair
     }
