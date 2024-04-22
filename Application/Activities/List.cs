@@ -1,4 +1,6 @@
 using Application.Core;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -8,18 +10,23 @@ namespace Application.Activities
 {
     public class List
     {
-        public class Query : IRequest<Result<List<Activity>>> { }//this query will return list of activity
+        public class Query : IRequest<Result<List<ActivityDto>>> { }//this query will return list of activity
 
-        public class Handler : IRequestHandler<Query, Result<List<Activity>>>  //IRequestHandler<TRequest, TResponse>
+        public class Handler : IRequestHandler<Query, Result<List<ActivityDto>>>  //IRequestHandler<TRequest, TResponse>
         {
             //Dependency Injection
             private readonly  DataContext _context;
-            public Handler(DataContext context){ //constructor
+            private readonly  IMapper _mapper;
+            public Handler(DataContext context, IMapper mapper){ //constructor
                 _context = context;
+                _mapper = mapper;
             }
-            public async Task<Result<List<Activity>>> Handle(Query request, CancellationToken cancellationToken)
+            public async Task<Result<List<ActivityDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
-                return Result<List<Activity>>.Success(await _context.Activities.ToListAsync(cancellationToken)); 
+                //var activities = await _context.Activities.Include(a => a.Attendees).ThenInclude(u => u.AppUser).ToListAsync(cancellationToken);
+                var activities = await _context.Activities.ProjectTo<ActivityDto>(_mapper.ConfigurationProvider).ToListAsync(cancellationToken);
+
+                return Result<List<ActivityDto>>.Success(activities); 
             }
         }
     }
